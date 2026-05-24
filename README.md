@@ -1,3 +1,12 @@
+---
+title: Kazakh Mafiya
+emoji: 🌙
+colorFrom: red
+colorTo: yellow
+sdk: docker
+app_port: 7860
+---
+
 # Ауыл Mafia — Түнгі Құпия
 
 Қазақ ауылы стиліндегі браузерлік party-ойын. Классикалық «Мафия / Werewolf»
