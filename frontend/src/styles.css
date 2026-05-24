@@ -397,3 +397,753 @@ h2 { font-size: 1.35rem; margin: 0 0 12px; color: var(--warm); text-align: cente
   .seat-avatar { width: 46px; height: 46px; }
   .seat-name { font-size: 0.66rem; }
 }
+
+/* ---- Focused layout/card polish pass ---- */
+html, #root { min-height: 100%; }
+body { min-height: 100%; background: #010206; }
+
+.app-shell {
+  min-height: 100vh;
+  min-height: 100svh;
+  isolation: isolate;
+}
+
+.top-bar {
+  position: fixed;
+  top: calc(14px + env(safe-area-inset-top));
+  left: 50%;
+  width: min(calc(100% - 32px), 1180px);
+  min-height: 66px;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(242,193,78,0.22);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(9,12,28,0.92), rgba(12,16,36,0.82));
+  box-shadow: 0 18px 46px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+}
+
+.top-bar .hamburger {
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  border-radius: 14px;
+}
+
+.top-bar .brand { text-align: left; min-width: 0; }
+.top-bar .brand-title { font-size: clamp(1.1rem, 1.8vw, 1.48rem); line-height: 1.05; }
+.top-bar .brand-sub { letter-spacing: 1.6px; }
+
+.topbar-code {
+  justify-self: end;
+  min-width: 88px;
+  text-align: center;
+  border: 1px solid rgba(242,193,78,0.28);
+  box-shadow: inset 0 0 18px rgba(242,193,78,0.07);
+}
+
+.main-content.content {
+  max-width: none;
+  margin: 0;
+  padding: calc(104px + env(safe-area-inset-top)) 18px 64px;
+}
+
+.home-content {
+  padding-top: clamp(34px, 7vh, 72px);
+}
+
+.screen-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.lobby-layout { max-width: 720px; }
+.game-layout { max-width: 1180px; }
+
+.phase-banner {
+  margin: 2px auto 14px;
+  max-width: 760px;
+  min-height: 34px;
+}
+
+.timerbar {
+  max-width: 720px;
+  margin: 0 auto 18px;
+}
+
+.moon-orb {
+  top: 108px;
+  right: max(26px, calc((100vw - 1180px) / 2 + 28px));
+  width: 74px;
+  height: 74px;
+  opacity: 0.42;
+}
+
+.sun-orb {
+  top: 54px;
+  opacity: 0.28;
+}
+
+.card, .panel {
+  border-radius: 18px;
+  border-color: rgba(242,193,78,0.20);
+}
+
+.btn {
+  min-height: 48px;
+  border-radius: 14px;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.075);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: linear-gradient(180deg, #ffe08c, var(--gold-soft));
+}
+
+.btn:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+}
+
+/* Lobby hierarchy */
+.home-wrap {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.lobby {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(22px, 4vw, 34px);
+}
+
+.lobby-head {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.lobby-head h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 6vw, 4.2rem);
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-shadow: 0 0 24px rgba(242,193,78,0.18);
+}
+
+.lobby-subtitle {
+  margin: 8px 0 0;
+  color: var(--warm);
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  font-weight: 700;
+}
+
+.room-code-card {
+  margin: 0 auto 14px;
+  padding: 18px 20px;
+  border: 1px solid rgba(242,193,78,0.24);
+  border-radius: 18px;
+  background: radial-gradient(circle at 50% 0%, rgba(242,193,78,0.14), rgba(0,0,0,0.26) 58%);
+}
+
+.room-code {
+  display: block;
+  letter-spacing: clamp(5px, 2vw, 10px);
+}
+
+.invite-btn { margin: 0 auto 18px; max-width: 360px; display: block; }
+
+.lobby-players {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.lobby-player-card {
+  min-height: 126px;
+  padding: 16px 12px;
+  border: 1px solid rgba(242,193,78,0.20);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(17,20,43,0.92), rgba(8,10,22,0.88));
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.lp-avatar {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 8px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(242,193,78,0.10);
+  border: 1px solid rgba(242,193,78,0.20);
+}
+
+.host-controls {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.host-controls .btn { margin-top: 0; }
+
+/* Shared premium Mafia cards */
+.mafia-card {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(242,193,78,0.72);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(125,19,35,0.36), transparent 36%),
+    radial-gradient(circle at 50% 100%, rgba(242,193,78,0.15), transparent 42%),
+    linear-gradient(180deg, #14182e 0%, #080914 100%);
+  box-shadow: 0 22px 54px rgba(0,0,0,0.70), 0 0 28px rgba(242,193,78,0.14);
+}
+
+.mafia-card::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(242,193,78,0.18);
+  border-radius: 15px;
+  pointer-events: none;
+}
+
+.mafia-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.10), transparent 22%, transparent 72%, rgba(242,193,78,0.08));
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.card-image-frame {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(242,193,78,0.34);
+  background: radial-gradient(circle at 50% 42%, rgba(40,45,76,0.95), rgba(7,8,18,0.96) 72%);
+  box-shadow: inset 0 0 26px rgba(0,0,0,0.65), 0 0 24px rgba(242,193,78,0.09);
+}
+
+.card-image-frame .role-image {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+  background: transparent;
+}
+
+.role-image-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-image-fallback span {
+  font-size: clamp(2.6rem, 9vw, 5.6rem);
+  filter: drop-shadow(0 0 18px rgba(242,193,78,0.22));
+}
+
+.role-image.round .role-image-fallback span {
+  font-size: 1.35rem;
+}
+
+.player-seat-card .role-image-fallback span {
+  font-size: 4rem;
+}
+
+.card-role-name {
+  position: relative;
+  z-index: 1;
+  color: var(--gold);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.card-team-badge, .card-status-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.card-player-name {
+  position: relative;
+  z-index: 1;
+  color: var(--text);
+  font-weight: 900;
+}
+
+.card-description {
+  position: relative;
+  z-index: 1;
+  margin: 6px 4px 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mafia-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 28px 66px rgba(0,0,0,0.74), 0 0 36px rgba(242,193,78,0.19);
+  }
+}
+
+/* Large role reveal card */
+.role-reveal {
+  max-width: 820px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.role-card-large.flip-card {
+  width: clamp(280px, 30vw, 340px);
+  height: clamp(420px, 44vw, 500px);
+  margin: 24px auto 18px;
+}
+
+.role-card-large .flip-back,
+.role-card-large .flip-front {
+  border-radius: 20px;
+  border: 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(125,19,35,0.36), transparent 36%),
+    linear-gradient(180deg, #14182e 0%, #080914 100%);
+  box-shadow: none;
+}
+
+.role-card-large .flip-front {
+  padding: 24px;
+  justify-content: space-between;
+}
+
+.role-card-image {
+  width: 100%;
+  height: 60%;
+}
+
+.role-card-large .role-name {
+  margin: 8px 0 0;
+  font-size: clamp(1.55rem, 3vw, 2.05rem);
+}
+
+.role-ability {
+  max-width: 620px;
+  margin: 14px auto;
+  color: var(--text);
+}
+
+/* Mafia table hierarchy */
+.mafia-table-wrap {
+  width: min(100%, 1040px);
+  max-width: 1040px;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: auto;
+  margin: 8px auto 22px;
+  overflow: visible;
+}
+
+.table-oval {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: min(100%, 680px);
+  height: clamp(220px, 25vw, 280px);
+  margin: 0 auto;
+}
+
+.table-center {
+  max-width: 330px;
+  padding: 18px;
+}
+
+.seats-layer {
+  position: relative;
+  inset: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.player-seat-card {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  width: 100%;
+  max-width: 180px;
+  min-height: 230px;
+  margin: 0 auto;
+  aspect-ratio: 2 / 3;
+  padding: 12px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  text-align: center;
+  transition: transform 0.18s ease, box-shadow 0.2s ease, filter 0.25s ease;
+}
+
+.player-seat-card.clickable { cursor: pointer; }
+.player-seat-card:hover { transform: none !important; }
+.player-seat-card.clickable:hover { transform: translateY(-3px) !important; }
+
+.player-seat-card .seat-avatar {
+  width: 100%;
+  height: 58%;
+  min-height: 112px;
+  margin: 0 0 10px;
+  border-radius: 14px;
+  border-color: rgba(242,193,78,0.36);
+}
+
+.player-seat-card .seat-unknown {
+  font-size: 4rem;
+  color: rgba(242,193,78,0.78);
+  line-height: 1;
+}
+
+.player-seat-card .seat-name {
+  min-height: 34px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  overflow: hidden;
+  font-size: 0.96rem;
+  line-height: 1.1;
+}
+
+.player-seat-card .seat-badges {
+  min-height: 19px;
+  margin-top: 6px;
+}
+
+.player-seat-card .seat-role {
+  margin-top: 5px;
+  font-size: 0.76rem;
+  line-height: 1.15;
+}
+
+.player-seat-card.dead {
+  filter: grayscale(0.85) brightness(0.64);
+  opacity: 0.78;
+}
+
+.player-seat-card.dead .seat-avatar {
+  opacity: 0.85;
+}
+
+.player-seat-card.speaking {
+  border-color: #ffe08a;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.70), 0 0 0 2px rgba(255,224,138,0.28), 0 0 32px rgba(255,224,138,0.30);
+}
+
+.player-seat-card.selected,
+.player-seat-card.is-voted {
+  border-color: #e3a646;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.72), 0 0 0 2px rgba(201,60,72,0.40), 0 0 30px rgba(201,60,72,0.34);
+}
+
+.vote-count, .voted-dot {
+  z-index: 3;
+}
+
+/* Eliminated reveal */
+.eliminated-reveal {
+  max-width: 820px;
+  margin: 18px auto 0;
+  text-align: center;
+}
+
+.reveal-kicker {
+  margin: 0 0 6px;
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.eliminated-stage {
+  display: flex;
+  justify-content: center;
+  margin: 18px 0;
+  perspective: 1200px;
+}
+
+.eliminated-card {
+  width: clamp(320px, 32vw, 380px);
+  min-height: clamp(480px, 46vw, 540px);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  border-color: rgba(211,72,72,0.82);
+  box-shadow: 0 30px 72px rgba(0,0,0,0.82), 0 0 42px rgba(211,72,72,0.22), 0 0 32px rgba(242,193,78,0.13);
+  animation: eliminatedReveal 0.75s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes eliminatedReveal {
+  from { opacity: 0; transform: translateY(18px) rotateY(-18deg) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.eliminated-image {
+  width: 100%;
+  height: 58%;
+  min-height: 270px;
+}
+
+.eliminated-card .card-player-name {
+  font-size: 1.25rem;
+}
+
+.eliminated-card .card-role-name {
+  font-size: 2rem;
+}
+
+.reveal-reason {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: auto;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.34);
+  border: 1px solid rgba(242,193,78,0.16);
+  display: grid;
+  gap: 3px;
+}
+
+.reveal-reason span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.host-next-inline {
+  max-width: 320px;
+  margin: 16px auto 0;
+}
+
+/* Final reveal cards */
+.final-reveal-grid.reveal-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 18px 0 24px;
+}
+
+.final-reveal-card {
+  min-height: 300px;
+  aspect-ratio: 2 / 3;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
+.final-reveal-card.dead {
+  opacity: 0.76;
+  filter: grayscale(0.8);
+}
+
+.final-card-image {
+  height: 58%;
+}
+
+.final-reveal-card .card-player-name {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.final-reveal-card .card-role-name {
+  font-size: 1.05rem;
+}
+
+@media (max-width: 920px) {
+  .main-content.content {
+    padding: calc(96px + env(safe-area-inset-top)) 12px 46px;
+  }
+
+  .top-bar {
+    top: calc(8px + env(safe-area-inset-top));
+    width: calc(100% - 20px);
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 16px;
+  }
+
+  .top-bar .hamburger {
+    width: 42px;
+    height: 42px;
+    font-size: 1.15rem;
+  }
+
+  .topbar-code {
+    min-width: 68px;
+    padding: 7px 8px;
+    font-size: 0.78rem;
+    letter-spacing: 1.4px;
+  }
+
+  .top-bar .brand-sub {
+    letter-spacing: 1px;
+  }
+
+  .moon-orb {
+    top: 90px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    opacity: 0.28;
+  }
+
+  .sun-orb {
+    width: 58px;
+    height: 58px;
+    margin-left: -29px;
+    opacity: 0.22;
+  }
+
+  .host-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .mafia-table-wrap {
+    height: auto;
+    min-height: 0;
+    width: 100%;
+    margin: 6px auto 14px;
+    padding-bottom: 4px;
+    aspect-ratio: auto;
+  }
+
+  .table-oval {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    height: 132px;
+    border-radius: 34px;
+  }
+
+  .seats-layer {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .player-seat-card {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100%;
+    min-height: 214px;
+    transform: none !important;
+  }
+
+  .player-seat-card.clickable:hover {
+    transform: translateY(-2px) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .main-content.content {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .brand-title {
+    font-size: 1rem;
+  }
+
+  .brand-sub {
+    font-size: 0.58rem;
+  }
+
+  .lobby {
+    padding: 20px 14px;
+  }
+
+  .room-code {
+    font-size: 1.85rem;
+    letter-spacing: 5px;
+  }
+
+  .lobby-players {
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  }
+
+  .role-card-large.flip-card {
+    width: min(88vw, 320px);
+    height: min(132vw, 480px);
+  }
+
+  .role-card-large .flip-front {
+    padding: 18px;
+  }
+
+  .eliminated-card {
+    width: min(88vw, 340px);
+    min-height: min(138vw, 510px);
+    padding: 18px;
+  }
+
+  .eliminated-image {
+    min-height: 238px;
+  }
+
+  .final-reveal-grid.reveal-list {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .final-reveal-card {
+    min-height: 270px;
+  }
+}

@@ -22,8 +22,8 @@ export default function MafiaTable({
       <div className="seats-layer">
         {players.map((p, i) => {
           const angle = (-90 + (360 / n) * i) * (Math.PI / 180);
-          const left = 50 + 47 * Math.cos(angle);
-          const top = 50 + 44 * Math.sin(angle);
+          const left = 50 + 40 * Math.cos(angle);
+          const top = 50 + 27 * Math.sin(angle);
           return (
             <PlayerSeat
               key={p.id}

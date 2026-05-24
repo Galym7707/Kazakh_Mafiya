@@ -3,7 +3,8 @@
 
 export function getRoleImage(roleId) {
   if (!roleId) return null;
-  return `/roles/${roleId}.png`;
+  const filename = roleId.endsWith(".png") ? roleId : `${roleId}.png`;
+  return `/roles/${filename}`;
 }
 
 // PNG жүктелмесе — кірістірілген эмодзи fallback

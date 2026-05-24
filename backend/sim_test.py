@@ -2,8 +2,25 @@
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 from backend.game import manager, NIGHT, VOTING, DISCUSSION, GAME_OVER, ROLE_REVEAL, ApiError
+
+
+def assert_eliminated_reveal(room, viewer_id):
+    st = room.state_for(viewer_id)
+    eliminated_id = st.get("last_eliminated_player_id")
+    if not eliminated_id:
+        return
+    eliminated = next((p for p in st["players"] if p["id"] == eliminated_id), None)
+    assert eliminated, "eliminated player missing from public state"
+    assert eliminated.get("role"), "eliminated role is not public"
+    assert eliminated.get("role_name"), "eliminated role name is not public"
+    assert st.get("last_eliminated_role") == eliminated.get("role")
+    assert st.get("last_eliminated_team")
+    assert st.get("last_eliminated_reason")
 
 
 def run_one(num_players):
@@ -42,6 +59,7 @@ def run_one(num_players):
             # таймерді мәжбүрлеп аяқтау
             room.timer_end = 0
             room.maybe_advance()
+            assert_eliminated_reveal(room, host)
         elif phase == VOTING:
             me = st.get("me", {})
             if me.get("alive"):
@@ -50,6 +68,7 @@ def run_one(num_players):
                     room.vote(host, alive[0])
             room.timer_end = 0
             room.maybe_advance()
+            assert_eliminated_reveal(room, host)
         else:
             room.timer_end = 0
             room.maybe_advance()

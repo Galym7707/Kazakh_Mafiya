@@ -11,6 +11,7 @@ import NightActionPanel from "./components/NightActionPanel.jsx";
 import VotingPanel from "./components/VotingPanel.jsx";
 import MorningNews from "./components/MorningNews.jsx";
 import GameOverReveal from "./components/GameOverReveal.jsx";
+import EliminatedReveal from "./components/EliminatedReveal.jsx";
 
 const LS_KEY = "auyl_mafia_session";
 const loadSession = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || null; } catch { return null; } };
@@ -63,9 +64,13 @@ export default function App() {
 
   if (!session || !state) {
     return (
-      <div className="app phase-day">
+      <div className="app app-shell phase-day">
         <Stars /><NightScenery />
-        <Home onEnter={enterRoom} presetCode={codeFromUrl} setError={setError} error={error} />
+        <main className="main-content home-content">
+          <div className="screen-container lobby-layout">
+            <Home onEnter={enterRoom} presetCode={codeFromUrl} setError={setError} error={error} />
+          </div>
+        </main>
       </div>
     );
   }
@@ -85,13 +90,15 @@ export default function App() {
     const pl = state.players.find((p) => p.name === v.name);
     if (pl) voteCounts[pl.id] = v.count;
   });
+  const screenClass = state.phase === "lobby" ? "lobby-layout" : "game-layout";
+  const continuePhase = () => call(() => api.next(state.code, session.playerId));
 
   return (
-    <div className={"app phase-" + theme}>
+    <div className={"app app-shell phase-" + theme}>
       <Stars /><NightScenery />
       <Sidebar state={state} session={session} open={sbOpen} onClose={() => setSbOpen(false)} actions={actions} />
 
-      <header className="topbar">
+      <header className="top-bar topbar">
         <button className="hamburger" onClick={() => setSbOpen(true)}>☰</button>
         <div className="brand">
           <span className="brand-title">Ауыл Mafia</span>
@@ -100,7 +107,8 @@ export default function App() {
         <div className="topbar-code">{state.code}</div>
       </header>
 
-      <main className="content">
+      <main className="main-content content">
+        <div className={"screen-container " + screenClass}>
         <PhaseBanner phase={state.phase} label={state.phase_label} dayNumber={state.day_number} />
         {state.phase !== "lobby" && state.phase !== "game_over" && (
           <TimerBar timeLeft={state.time_left} duration={state.phase_duration} />
@@ -132,7 +140,12 @@ export default function App() {
                 onSubmit={(a, t, t2) => call(() => api.action(state.code, session.playerId, a, t, t2))}
               />
             )}
-            {state.phase === "morning" && <MorningNews state={state} />}
+            {state.phase === "morning" && (
+              <>
+                <MorningNews state={state} />
+                <EliminatedReveal state={state} isHost={state.is_host} onContinue={continuePhase} />
+              </>
+            )}
             {state.phase === "discussion" && (
               <ChatPanel state={state} session={session}
                 onSend={(txt) => call(() => api.chat(state.code, session.playerId, txt))} />
@@ -142,9 +155,14 @@ export default function App() {
                 onConfirm={() => call(() => api.vote(state.code, session.playerId, voteSel))}
                 onSkip={() => call(() => api.vote(state.code, session.playerId, null))} />
             )}
-            {state.phase === "day_result" && <DayResult state={state} session={session} call={call} />}
-            {state.is_host && ["morning", "discussion", "voting", "day_result"].includes(state.phase) && (
-              <button className="btn host-next" onClick={() => call(() => api.next(state.code, session.playerId))}>
+            {state.phase === "day_result" && (
+              <>
+                <DayResult state={state} />
+                <EliminatedReveal state={state} isHost={state.is_host} onContinue={continuePhase} />
+              </>
+            )}
+            {state.is_host && ["discussion", "voting"].includes(state.phase) && (
+              <button className="btn host-next" onClick={continuePhase}>
                 Келесі фаза →
               </button>
             )}
@@ -155,6 +173,7 @@ export default function App() {
           <GameOverReveal state={state} isHost={state.is_host}
             onAgain={actions.reset} onLeave={leave} />
         )}
+        </div>
       </main>
     </div>
   );
@@ -267,17 +286,22 @@ function Lobby({ state, session, actions }) {
 
   return (
     <div className="card lobby">
-      <div className="room-code-box">
+      <div className="lobby-head">
+        <h1>Ауыл Mafia</h1>
+        <p className="lobby-subtitle">Түнгі Құпия</p>
+      </div>
+
+      <div className="room-code-box room-code-card">
         <span className="room-code-label">Бөлме коды</span>
         <span className="room-code">{state.code}</span>
       </div>
-      <button className="btn" onClick={copy}>{copied ? "Сілтеме көшірілді!" : "Сілтемені көшіру"}</button>
+      <button className="btn invite-btn" onClick={copy}>{copied ? "Сілтеме көшірілді!" : "Сілтемені көшіру"}</button>
 
       <div className="lobby-players">
         {state.players.map((p) => (
-          <div key={p.id} className="lobby-pcard">
+          <div key={p.id} className="lobby-player-card lobby-pcard">
             <div className="lp-avatar">{p.is_bot ? "🤖" : "🧑"}</div>
-            <div className="lp-name">{p.name}{p.is_me ? " (сіз)" : ""}</div>
+            <div className="lp-name card-player-name">{p.name}{p.is_me ? " (сіз)" : ""}</div>
             <div className="lp-badges">
               {p.is_host && <span className="mini-badge host">HOST</span>}
               {p.is_bot && <span className="mini-badge bot">BOT</span>}
@@ -310,13 +334,15 @@ function RoleReveal({ state, session, call }) {
   return (
     <div className="card role-reveal">
       <h2>Сіздің құпия рөліңіз</h2>
-      <div className={"flip-card " + (flipped ? "flipped" : "")} onClick={() => setFlipped(true)}>
+      <div className={"flip-card mafia-card role-card-large " + (flipped ? "flipped" : "")} onClick={() => setFlipped(true)}>
         <div className="flip-inner">
           <div className="flip-back"><div className="card-pattern">🎴</div><span>Ашу үшін басыңыз</span></div>
           <div className="flip-front">
-            <RoleImage roleKey={me.role} size={150} round />
-            <h3 className="role-name">{me.role_name}</h3>
-            <span className={"team-badge " + (TEAM_CLASS[me.team] || "")}>{me.team}</span>
+            <div className="card-image-frame role-card-image">
+              <RoleImage roleKey={me.role} size={null} fit="contain" />
+            </div>
+            <h3 className="role-name card-role-name">{me.role_name}</h3>
+            <span className={"team-badge card-team-badge " + (TEAM_CLASS[me.team] || "")}>{me.team}</span>
           </div>
         </div>
       </div>

@@ -60,7 +60,7 @@ export default function Sidebar({ state, session, open, onClose, actions }) {
                 <span className="sb-pt">
                   {p.is_host && <span className="mini-badge host">H</span>}
                   {p.is_bot && <span className="mini-badge bot">BOT</span>}
-                  {state.phase === "game_over" && p.role_name && (
+                  {(state.phase === "game_over" || !p.alive) && p.role_name && (
                     <span className="mini-badge role">{p.role_name}</span>
                   )}
                   {!p.alive && <span className="mini-badge dead">✖</span>}

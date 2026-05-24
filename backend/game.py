@@ -98,6 +98,15 @@ class Room:
         self.emshi_self_used = set()
         self.akim_immunity_used = False
         self.last_eliminated = None  # name for morning
+        self.last_eliminated_player_id = None
+        self.last_eliminated_player_name = None
+        self.last_eliminated_role = None
+        self.last_eliminated_role_name = None
+        self.last_eliminated_team = None
+        self.last_eliminated_reason = None
+        self.last_eliminated_role_image = None
+        self.last_eliminated_role_description = None
+        self.last_day_result_summary = ""
         self.speaking_order = []     # талқылаудағы сөйлеу кезегі (player_id тізімі)
         self.discussion_start = None
         self.vote_breakdown = []     # [{name, count}] нәтиже көрсету үшін
@@ -124,6 +133,35 @@ class Room:
 
     def players_in_order(self):
         return [self.players[p] for p in self.order]
+
+    def _clear_eliminated_reveal(self, summary="Бұл жолы ешкім ойыннан шықпады."):
+        self.last_eliminated = None
+        self.last_eliminated_player_id = None
+        self.last_eliminated_player_name = None
+        self.last_eliminated_role = None
+        self.last_eliminated_role_name = None
+        self.last_eliminated_team = None
+        self.last_eliminated_reason = None
+        self.last_eliminated_role_image = None
+        self.last_eliminated_role_description = None
+        self.last_day_result_summary = summary
+
+    def _record_eliminated_reveal(self, player_id, reason):
+        p = self.players.get(player_id)
+        role = R.get_role(p["role"]) if p and p.get("role") else None
+        if not p or not role:
+            self._clear_eliminated_reveal()
+            return
+        self.last_eliminated = p["name"]
+        self.last_eliminated_player_id = player_id
+        self.last_eliminated_player_name = p["name"]
+        self.last_eliminated_role = p["role"]
+        self.last_eliminated_role_name = role["name"]
+        self.last_eliminated_team = role["team"]
+        self.last_eliminated_reason = reason
+        self.last_eliminated_role_image = role["image"]
+        self.last_eliminated_role_description = role["ability"]
+        self.last_day_result_summary = f"{p['name']} ойыннан шықты."
 
     def touch(self):
         self.last_active = time.time()
@@ -436,8 +474,11 @@ class Room:
             if chosen not in protected and self.players.get(chosen, {}).get("alive"):
                 self.players[chosen]["alive"] = False
                 eliminated = self.players[chosen]["name"]
+                self._record_eliminated_reveal(chosen, "Түнгі әрекет нәтижесі")
 
-        self.last_eliminated = eliminated
+        if not eliminated:
+            self._clear_eliminated_reveal("Бұл жолы ешкім ойыннан шықпады.")
+
         # Таңғы жаңалық
         if eliminated:
             self.morning_news = C.morning_neutral() + " " + C.morning_eliminated(eliminated)
@@ -533,18 +574,22 @@ class Room:
                 # Аким иммунитеті
                 if self.players[chosen]["role"] == "akim" and not self.akim_immunity_used:
                     self.akim_immunity_used = True
-                    self.day_result_text = "Акимат жабық. Аким бүгін шықпайды."
+                    self.day_result_text = "Акимат жабық болды. Ойыншы бүгін шықпады."
+                    self._clear_eliminated_reveal("Акимат жабық болды. Ойыншы бүгін шықпады.")
                     self.history.append("Аким иммунитетімен аман қалды.")
                 else:
                     self.players[chosen]["alive"] = False
                     eliminated_name = self.players[chosen]["name"]
+                    self._record_eliminated_reveal(chosen, "Дауыс беру нәтижесі")
                     self.day_result_text = C.day_result_out(eliminated_name)
                     self.history.append(f"Дауыспен {eliminated_name} ойыннан шықты.")
             else:
                 self.day_result_text = C.day_result_none()
+                self._clear_eliminated_reveal("Бұл жолы ешкім ойыннан шықпады.")
                 self.history.append("Дауыс тең болды, ешкім шықпады.")
         else:
             self.day_result_text = C.day_result_none()
+            self._clear_eliminated_reveal("Бұл жолы ешкім ойыннан шықпады.")
             self.history.append("Ешкім дауыс алмады.")
 
         # Дауыс қорытындысын (атаулар бойынша) сақтаймыз
@@ -618,7 +663,7 @@ class Room:
         self.emshi_last_protect = {}
         self.emshi_self_used = set()
         self.akim_immunity_used = False
-        self.last_eliminated = None
+        self._clear_eliminated_reveal("")
         self.speaking_order = []
         self.discussion_start = None
         self.vote_breakdown = []
@@ -646,7 +691,7 @@ class Room:
                 "is_me": pid == player_id,
                 "connected": p["connected"],
             }
-            if reveal_all and p["role"]:
+            if (reveal_all or not p["alive"]) and p["role"]:
                 role = R.get_role(p["role"])
                 entry["role"] = p["role"]
                 entry["role_name"] = role["name"]
@@ -676,6 +721,15 @@ class Room:
             "history": self.history[-12:],
             "chat_enabled": self.phase == DISCUSSION,
             "vote_breakdown": self.vote_breakdown if self.phase in (DAY_RESULT, GAME_OVER) else [],
+            "last_eliminated_player_id": self.last_eliminated_player_id,
+            "last_eliminated_player_name": self.last_eliminated_player_name,
+            "last_eliminated_role": self.last_eliminated_role,
+            "last_eliminated_role_name": self.last_eliminated_role_name,
+            "last_eliminated_team": self.last_eliminated_team,
+            "last_eliminated_reason": self.last_eliminated_reason,
+            "last_eliminated_role_image": self.last_eliminated_role_image,
+            "last_eliminated_role_description": self.last_eliminated_role_description,
+            "last_day_result_summary": self.last_day_result_summary,
         }
 
         # Сөйлеу кезегі (талқылау)

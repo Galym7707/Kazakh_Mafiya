@@ -13,24 +13,31 @@ export default function GameOverReveal({ state, isHost, onAgain, onLeave }) {
       <p className="news">{state.winner_text}</p>
 
       <h3 className="reveal-title">Барлық рөлдер</h3>
-      <ul className="reveal-list">
+      <div className="final-reveal-grid reveal-list">
         {state.players.map((p, i) => (
-          <li key={p.id} className={(p.alive ? "" : "dead") + " flip-in"} style={{ animationDelay: i * 0.08 + "s" }}>
-            <RoleImage roleKey={p.role} size={46} round />
+          <article
+            key={p.id}
+            className={"mafia-card final-reveal-card " + (p.alive ? "" : "dead") + " flip-in"}
+            style={{ animationDelay: i * 0.08 + "s" }}
+          >
+            <div className="card-image-frame final-card-image">
+              <RoleImage roleKey={p.role} size={null} fit="contain" />
+            </div>
             <div className="reveal-info">
-              <span className="p-name">
+              <span className="p-name card-player-name">
                 {p.name} {p.is_bot && <span className="mini-badge bot">BOT</span>}
               </span>
-              <span className="reveal-role">
-                {p.role_name} · <span className={TEAM_CLASS[p.team]}>{p.team}</span>
+              <span className="reveal-role card-role-name">
+                {p.role_name}
               </span>
+              <span className={"card-team-badge " + (TEAM_CLASS[p.team] || "")}>{p.team}</span>
             </div>
-            <span className={"mini-badge " + (p.alive ? "alive-b" : "dead")}>
+            <span className={"card-status-badge mini-badge " + (p.alive ? "alive-b" : "dead")}>
               {p.alive ? "Тірі" : "Шықты"}
             </span>
-          </li>
+          </article>
         ))}
-      </ul>
+      </div>
 
       {isHost ? (
         <button className="btn btn-primary big" onClick={onAgain}>Қайта ойнау</button>
