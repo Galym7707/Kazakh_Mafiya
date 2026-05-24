@@ -201,7 +201,7 @@ export default function App() {
         )}
 
         {state.phase === "game_over" && (
-          <GameOverReveal state={state} isHost={state.is_host}
+          <GameOverReveal state={state} isHost={state.is_host} session={session}
             onAgain={actions.reset} onLeave={leave} />
         )}
         </div>
