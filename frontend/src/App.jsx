@@ -13,6 +13,8 @@ import VotingPanel from "./components/VotingPanel.jsx";
 import MorningNews from "./components/MorningNews.jsx";
 import GameOverReveal from "./components/GameOverReveal.jsx";
 import EliminatedReveal from "./components/EliminatedReveal.jsx";
+import EliminatedModal from "./components/EliminatedModal.jsx";
+import MyRoleCard from "./components/MyRoleCard.jsx";
 
 const LS_KEY = "auyl_mafia_session";
 const loadSession = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || null; } catch { return null; } };
@@ -149,6 +151,7 @@ export default function App() {
 
         {["night", "morning", "discussion", "voting", "day_result"].includes(state.phase) && (
           <>
+            <MyRoleCard me={state.me} />
             <MafiaTable
               players={state.players}
               currentSpeakerId={state.current_speaker_id}
@@ -170,6 +173,7 @@ export default function App() {
               <>
                 <MorningNews state={state} />
                 <EliminatedReveal state={state} isHost={state.is_host} onContinue={continuePhase} />
+                <EliminatedModal state={state} isHost={state.is_host} onContinue={continuePhase} />
               </>
             )}
             {state.phase === "discussion" && (
@@ -185,6 +189,7 @@ export default function App() {
               <>
                 <DayResult state={state} />
                 <EliminatedReveal state={state} isHost={state.is_host} onContinue={continuePhase} />
+                <EliminatedModal state={state} isHost={state.is_host} onContinue={continuePhase} />
               </>
             )}
             {state.is_host && ["discussion", "voting"].includes(state.phase) && (
