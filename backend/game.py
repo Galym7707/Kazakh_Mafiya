@@ -18,13 +18,27 @@ DAY_RESULT = "day_result"
 GAME_OVER = "game_over"
 
 PHASE_DURATIONS = {
-    ROLE_REVEAL: 15,
-    NIGHT: 45,
+    ROLE_REVEAL: 12,
+    NIGHT: 35,
     MORNING: 8,
     DISCUSSION: 90,
-    VOTING: 30,
-    DAY_RESULT: 10,
+    VOTING: 25,
+    DAY_RESULT: 8,
 }
+
+# Күн/түн визуал темасы (frontend phase-<theme> класы)
+PHASE_THEME = {
+    LOBBY: "day",
+    ROLE_REVEAL: "reveal",
+    NIGHT: "night",
+    MORNING: "day",
+    DISCUSSION: "day",
+    VOTING: "voting",
+    DAY_RESULT: "result",
+    GAME_OVER: "game-over",
+}
+
+SPEAK_TURN = 20  # сөйлеу кезегі (сек)
 
 PHASE_LABEL = {
     LOBBY: "Лобби",
@@ -84,6 +98,9 @@ class Room:
         self.emshi_self_used = set()
         self.akim_immunity_used = False
         self.last_eliminated = None  # name for morning
+        self.speaking_order = []     # талқылаудағы сөйлеу кезегі (player_id тізімі)
+        self.discussion_start = None
+        self.vote_breakdown = []     # [{name, count}] нәтиже көрсету үшін
         self._add_player(host_id, host_name, is_bot=False)
 
     # ---------- ойыншыларды басқару ----------
@@ -209,8 +226,7 @@ class Room:
         elif phase == NIGHT:
             self._resolve_night()
         elif phase == MORNING:
-            self._set_phase(DISCUSSION)
-            self._maybe_bot_chat()
+            self._begin_discussion()
         elif phase == DISCUSSION:
             self.votes = {}
             self._set_phase(VOTING)
@@ -221,6 +237,24 @@ class Room:
                 self._begin_night()
             else:
                 self._set_phase(GAME_OVER)
+
+    def _begin_discussion(self):
+        # Сөйлеу кезегі: тірі ойыншылар тұрақты ретпен
+        self.speaking_order = list(self.alive_ids())
+        self.discussion_start = time.time()
+        self._set_phase(DISCUSSION)
+        self._maybe_bot_chat()
+
+    def current_speaker(self):
+        if self.phase != DISCUSSION or not self.speaking_order or self.discussion_start is None:
+            return None, None
+        elapsed = time.time() - self.discussion_start
+        idx = int(elapsed // SPEAK_TURN) % len(self.speaking_order)
+        speaker = self.speaking_order[idx]
+        turn_end = self.discussion_start + (int(elapsed // SPEAK_TURN) + 1) * SPEAK_TURN
+        if self.timer_end is not None:
+            turn_end = min(turn_end, self.timer_end)
+        return speaker, turn_end
 
     def _begin_night(self):
         self.night_number += 1
@@ -513,6 +547,11 @@ class Room:
             self.day_result_text = C.day_result_none()
             self.history.append("Ешкім дауыс алмады.")
 
+        # Дауыс қорытындысын (атаулар бойынша) сақтаймыз
+        self.vote_breakdown = sorted(
+            [{"name": self.players[t]["name"], "count": c} for t, c in tally.items()],
+            key=lambda x: -x["count"],
+        )
         self._check_winner()
         self._set_phase(DAY_RESULT)
 
@@ -580,6 +619,9 @@ class Room:
         self.emshi_self_used = set()
         self.akim_immunity_used = False
         self.last_eliminated = None
+        self.speaking_order = []
+        self.discussion_start = None
+        self.vote_breakdown = []
         for p in self.players.values():
             p["role"] = None
             p["team"] = None
@@ -616,7 +658,9 @@ class Room:
             "code": self.code,
             "phase": self.phase,
             "phase_label": PHASE_LABEL.get(self.phase, self.phase),
+            "phase_theme": PHASE_THEME.get(self.phase, "day"),
             "time_left": self.time_left(),
+            "phase_duration": PHASE_DURATIONS.get(self.phase),
             "day_number": self.day_number,
             "night_number": self.night_number,
             "host_id": self.host_id,
@@ -630,7 +674,17 @@ class Room:
             "winner": self.winner,
             "winner_text": self.winner_text,
             "history": self.history[-12:],
+            "chat_enabled": self.phase == DISCUSSION,
+            "vote_breakdown": self.vote_breakdown if self.phase in (DAY_RESULT, GAME_OVER) else [],
         }
+
+        # Сөйлеу кезегі (талқылау)
+        if self.phase == DISCUSSION:
+            sp_id, sp_end = self.current_speaker()
+            state["current_speaker_id"] = sp_id
+            state["current_speaker_name"] = self.players[sp_id]["name"] if sp_id else None
+            state["speaking_turn_end"] = int(round(sp_end - time.time())) if sp_end else None
+            state["can_chat"] = bool(me and me["alive"])
 
         # Менің жеке рөлім
         if me and me["role"]:
