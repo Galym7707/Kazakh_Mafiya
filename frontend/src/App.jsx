@@ -3,6 +3,7 @@ import { api } from "./api.js";
 import { TEAM_CLASS } from "./roles.js";
 import RoleImage from "./components/RoleImage.jsx";
 import Sidebar from "./components/Sidebar.jsx";
+import HomePage from "./components/HomePage.jsx";
 import MafiaTable from "./components/MafiaTable.jsx";
 import PhaseBanner from "./components/PhaseBanner.jsx";
 import TimerBar from "./components/TimerBar.jsx";
@@ -45,7 +46,6 @@ export default function App() {
     return () => clearInterval(pollRef.current);
   }, [session, refresh]);
 
-  // фаза ауысқанда дауыс таңдауын тазалау
   const phase = state?.phase;
   useEffect(() => { setVoteSel(null); }, [phase]);
 
@@ -62,13 +62,32 @@ export default function App() {
 
   const theme = state?.phase_theme || "day";
 
+  // ----- HOME (бөлмеге кірмеген кезде) -----
   if (!session || !state) {
     return (
-      <div className="app app-shell phase-day">
+      <div className="app app-shell phase-day home-mode">
         <Stars /><NightScenery />
-        <main className="main-content home-content">
-          <div className="screen-container lobby-layout">
-            <Home onEnter={enterRoom} presetCode={codeFromUrl} setError={setError} error={error} />
+        <Sidebar
+          mode="home"
+          open={sbOpen}
+          onClose={() => setSbOpen(false)}
+        />
+        <header className="top-bar topbar home-topbar">
+          <button className="hamburger" onClick={() => setSbOpen(true)} aria-label="Меню">☰</button>
+          <div className="brand">
+            <span className="brand-title">Ауыл Mafia</span>
+            <span className="brand-sub">Түнгі Құпия</span>
+          </div>
+          <span className="topbar-spacer" />
+        </header>
+        <main className="main-content home-content with-sidebar">
+          <div className="screen-container landing-layout">
+            <HomePage
+              onEnter={enterRoom}
+              presetCode={codeFromUrl}
+              setError={setError}
+              error={error}
+            />
           </div>
         </main>
       </div>
@@ -96,9 +115,16 @@ export default function App() {
   return (
     <div className={"app app-shell phase-" + theme}>
       <Stars /><NightScenery />
-      <Sidebar state={state} session={session} open={sbOpen} onClose={() => setSbOpen(false)} actions={actions} />
+      <Sidebar
+        mode="game"
+        state={state}
+        session={session}
+        open={sbOpen}
+        onClose={() => setSbOpen(false)}
+        actions={actions}
+      />
 
-      <header className="top-bar topbar">
+      <header className="top-bar topbar with-sidebar">
         <button className="hamburger" onClick={() => setSbOpen(true)}>☰</button>
         <div className="brand">
           <span className="brand-title">Ауыл Mafia</span>
@@ -107,7 +133,7 @@ export default function App() {
         <div className="topbar-code">{state.code}</div>
       </header>
 
-      <main className="main-content content">
+      <main className="main-content content with-sidebar">
         <div className={"screen-container " + screenClass}>
         <PhaseBanner phase={state.phase} label={state.phase_label} dayNumber={state.day_number} />
         {state.phase !== "lobby" && state.phase !== "game_over" && (
@@ -213,68 +239,6 @@ function TableCenter({ state }) {
   if (state.phase === "day_result")
     return <div className="tc"><div className="tc-scroll">📜</div><p>{state.day_result_text}</p></div>;
   return <div className="tc" />;
-}
-
-// ---------------- Home ----------------
-function Home({ onEnter, presetCode, setError, error }) {
-  const [name, setName] = useState(localStorage.getItem("auyl_name") || "");
-  const [code, setCode] = useState(presetCode || "");
-  const [busy, setBusy] = useState(false);
-  const [faq, setFaq] = useState(false);
-
-  async function go(fn) {
-    if (!name.trim()) return setError("Атыңызды жазыңыз.");
-    setBusy(true);
-    try {
-      localStorage.setItem("auyl_name", name.trim());
-      const d = await fn();
-      window.history.replaceState({}, "", `/?room=${d.room_code}`);
-      onEnter(d.room_code, d.player_id, name.trim(), d.state);
-    } catch (e) { setError(e.message); } finally { setBusy(false); }
-  }
-
-  return (
-    <div className="home-wrap">
-      <div className="card home">
-        <div className="hero">
-          <div className="moon">🌙</div>
-          <h1>Ауыл Mafia</h1>
-          <p className="tagline">Түнгі Құпия — күдік, блеф, дауыс.</p>
-        </div>
-
-        <label className="field"><span>Атыңыз</span>
-          <input value={name} maxLength={20} placeholder="Мысалы: Айдос"
-            onChange={(e) => setName(e.target.value)} /></label>
-
-        <button className="btn btn-primary big" disabled={busy}
-          onClick={() => go(() => api.createRoom(name.trim()))}>Бөлме құру</button>
-
-        <div className="divider"><span>немесе бөлмеге кіру</span></div>
-
-        <label className="field"><span>Бөлме коды</span>
-          <input value={code} maxLength={5} placeholder="ABCDE"
-            onChange={(e) => setCode(e.target.value.toUpperCase())} /></label>
-        <button className="btn big" disabled={busy}
-          onClick={() => go(() => api.joinRoom(code.trim().toUpperCase(), name.trim()))}>Кіру</button>
-
-        {error && <div className="error-banner">{error}</div>}
-
-        <button className="faq-toggle" onClick={() => setFaq(!faq)}>
-          Қалай ойнайды? {faq ? "▲" : "▼"}
-        </button>
-        {faq && (
-          <div className="faq-body">
-            <p>🌙 <b>Түн:</b> рөлдер жасырын әрекет етеді.</p>
-            <p>🌅 <b>Таң:</b> түнгі жаңалық жарияланады.</p>
-            <p>💬 <b>Талқылау:</b> күдіктілерді талқылайсыз.</p>
-            <p>🗳️ <b>Дауыс:</b> күдікті ойыннан шығады.</p>
-            <p>🏆 Ауыл барлық Хуторлықтарды тапса жеңеді; Хуторлықтар ауылмен теңессе жеңеді.</p>
-            <p className="faq-note">Кемінде 4 ойыншы · ұсынылады 5–8 · макс 10. Достарыңды шақыр немесе «Бот қос».</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 // ---------------- Lobby ----------------
